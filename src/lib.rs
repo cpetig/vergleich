@@ -42,16 +42,18 @@ pub struct ProgramRun {
 impl ProgramRun {
     pub fn new(filename: &str) -> Result<Self, rusqlite::Error> {
         let connection = Connection::open(filename)?;
-        if let Err(e) = connection.query_row("SELECT count(id) from vergleich_values", [], |_| Ok(())) {
+        if let Err(e) =
+            connection.query_row("SELECT count(id) from vergleich_values", [], |_| Ok(()))
+        {
             println!("Err 0 {}", e);
-//            match e {
+            //            match e {
 
             // assume the database is empty, create table
             connection.execute(
                 "CREATE TABLE vergleich_values (id TEXT PRIMARY KEY, value FLOAT)",
                 [],
             )?;
-//        }
+            //        }
         }
         Ok(Self { connection })
     }
@@ -62,26 +64,30 @@ impl ProgramRun {
         }
     }
     pub fn value(&mut self, name: &str, v: f32) -> f32 {
-        if let Ok(Ok(Ok(Some(Ok(f))))) = self
-            .connection
-            .prepare("SELECT value from vergleich_values where id=?1")
-            .map(|mut s| s.query(params![name]).map(|mut r| r.next().map(|or| or.map(|row| row.get::<_, f32>(0)))))
-        {
+        if let Ok(f) = self.connection.query_row(
+            "SELECT value from vergleich_values where id=?1",
+            params![name],
+            |row| row.get::<_, f32>(0),
+        ) {
             println!("old value {}", f);
             self.connection
                 .execute(
                     "UPDATE vergleich_values SET value=?2 where id=?1",
                     params![name, v],
                 )
-                .map_err(|e| println!("Error {}", e));
+                .unwrap_or_else(|e| {
+                    println!("Error {}", e);
+                    0
+                });
         } else {
             self.connection
                 .execute(
                     "INSERT INTO vergleich_values VALUES (?1, ?2)",
                     params![name, v],
                 )
-                .map_err(|e| {
+                .unwrap_or_else(|e| {
                     println!("Error {}", e);
+                    0
                 });
         }
         println!("value {} {}", name, v);
