@@ -37,6 +37,7 @@ impl<'b, 'a: 'b> Context<'a> {
 
 pub struct ProgramRun {
     connection: Connection,
+    epsilon: f32,
 }
 
 impl ProgramRun {
@@ -55,7 +56,10 @@ impl ProgramRun {
             )?;
             //        }
         }
-        Ok(Self { connection })
+        Ok(Self {
+            connection,
+            epsilon: 1e-7,
+        })
     }
     pub fn context<'b, 'a: 'b>(&'a mut self, name: &str) -> Context<'b> {
         Context {
@@ -63,13 +67,19 @@ impl ProgramRun {
             run: self,
         }
     }
+    pub fn difference(name: &str, v_old: f32, v_new: f32) {
+        println!("Variable {} old {} new {}", name, v_old, v_new);
+    }
     pub fn value(&mut self, name: &str, v: f32) -> f32 {
         if let Ok(f) = self.connection.query_row(
             "SELECT value from vergleich_values where id=?1",
             params![name],
             |row| row.get::<_, f32>(0),
         ) {
-            println!("old value {}", f);
+            if (f - v).abs() > self.epsilon {
+                Self::difference(name, f, v);
+            }
+            //println!("old value {}", f);
             self.connection
                 .execute(
                     "UPDATE vergleich_values SET value=?2 where id=?1",
@@ -90,7 +100,7 @@ impl ProgramRun {
                     0
                 });
         }
-        println!("value {} {}", name, v);
+        // println!("value {} {}", name, v);
         v
     }
 }
