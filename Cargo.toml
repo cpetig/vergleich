@@ -1,0 +1,17 @@
+[package]
+name = "vergleich"
+version = "0.1.0"
+edition = "2018"
+authors = ["Christof Petig <christof.petig@arcor.de>"]
+description = "Compare computations in a program across versions"
+license = "MIT/Apache-2.0"
+#repository = ""
+keywords = ["version comparison", "computation results"]
+#categories = ""
+#documentation = ""
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rusqlite = "*"
