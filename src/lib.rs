@@ -21,16 +21,18 @@ impl<'a> Context<'a> {
         self.run.value(&name2, val);
         val
     }
+}
 
-    // pub fn context<'b: 'a>(&mut self, name: &str) -> Context<'b> {
-    //     let mut prefix = self.prefix.clone();
-    //     prefix.push('.');
-    //     prefix.push_str(name);
-    //     Context {
-    //         prefix,
-    //         run: self.run,
-    //     }
-    // }
+impl<'b, 'a: 'b> Context<'a> {
+    pub fn context(&'a mut self, name: &str) -> Context<'b> {
+        let mut prefix = self.prefix.clone();
+        prefix.push('.');
+        prefix.push_str(name);
+        Context {
+            prefix,
+            run: self.run,
+        }
+    }
 }
 
 pub struct ProgramRun {
@@ -55,22 +57,18 @@ impl ProgramRun {
     }
 }
 
-// pub fn value(pack: &mut (Context, &mut ProgramRun), name: &str, v: f32) -> f32 {
-//     pack.0.value(pack.1, name, v)
-// }
-
 #[cfg(test)]
 mod tests {
-    use crate::{ProgramRun};
+    use crate::ProgramRun;
 
     #[test]
     fn smoke_test() -> Result<(), rusqlite::Error> {
         let mut p = ProgramRun::new("test.sqlite")?;
         p.value("outer", 42.0);
         let mut c = p.context("ctx");
-        let value1 = c.value( "val1", 17.2);
-        //let mut c2 = c.context("inner");
-        let value2 = c.value("val2",33.3);
+        let value1 = c.value("val1", 17.2);
+        let mut c2 = c.context("inner");
+        let value2 = c2.value("val2", 33.3);
         println!("{} {}", value1, value2);
         Ok(())
     }
