@@ -44,7 +44,7 @@ impl ProgramRun {
     pub fn new(filename: &str) -> Result<Self, rusqlite::Error> {
         let connection = Connection::open(filename)?;
         if let Err(e) =
-            connection.query_row("SELECT count(id) from vergleich_values", [], |_| Ok(()))
+            connection.query_row("SELECT count(id) from vergleich_values", params![], |_| Ok(()))
         {
             println!("Err 0 {}", e);
             //            match e {
@@ -52,7 +52,7 @@ impl ProgramRun {
             // assume the database is empty, create table
             connection.execute(
                 "CREATE TABLE vergleich_values (id TEXT PRIMARY KEY, value FLOAT)",
-                [],
+                params![],
             )?;
             //        }
         }
@@ -74,16 +74,16 @@ impl ProgramRun {
         if let Ok(f) = self.connection.query_row(
             "SELECT value from vergleich_values where id=?1",
             params![name],
-            |row| row.get::<_, f32>(0),
+            |row| row.get::<_, f64>(0),
         ) {
-            if (f - v).abs() > self.epsilon {
-                Self::difference(name, f, v);
+            if ((f as f32) - v).abs() > self.epsilon {
+                Self::difference(name, f as f32, v);
             }
             //println!("old value {}", f);
             self.connection
                 .execute(
                     "UPDATE vergleich_values SET value=?2 where id=?1",
-                    params![name, v],
+                    params![name, v as f64],
                 )
                 .unwrap_or_else(|e| {
                     println!("Error {}", e);
@@ -93,7 +93,7 @@ impl ProgramRun {
             self.connection
                 .execute(
                     "INSERT INTO vergleich_values VALUES (?1, ?2)",
-                    params![name, v],
+                    params![name, v as f64],
                 )
                 .unwrap_or_else(|e| {
                     println!("Error {}", e);
@@ -116,15 +116,19 @@ mod tests {
         let mut c = p.context("ctx");
         //p.value("conflict", 13.0);
         let value1 = c.value("val1", 17.2);
-        let value2 = {
-            let mut c2 = c.context("inner");
-            c2.value("val2", 33.3)
-        };
+        // let value2 = {
+        //     let mut c2 = c.context("inner");
+        //     c2.value("val2", 33.3)
+        // };
+        // for i in 0..3 {
+        //     let mut c4 = c.context(&i.to_string());
+        //     c4.value("loopval", i as f32);
+        // }
         //c.value("conflict", 14.0); // TODO: Is there a way to make this non-conflicting?
         let mut c3 = p.context("ctx3");
         c3.value("val", 2.0);
         p.value("no conflict", 13.0);
-        println!("{} {}", value1, value2);
+        // println!("{} {}", value1, value2);
         Ok(())
     }
 }
