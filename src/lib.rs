@@ -23,8 +23,9 @@ impl<'a> Context<'a> {
     }
 }
 
-impl<'b, 'a: 'b> Context<'a> {
-    pub fn context(&'a mut self, name: &str) -> Context<'b> {
+// 'a lives longest (we should agree on a convention here)
+impl<'c, 'b: 'c, 'a: 'b> Context<'a> {
+    pub fn context(&'b mut self, name: &str) -> Context<'c> {
         let mut prefix = self.prefix.clone();
         prefix.push('.');
         prefix.push_str(name);
@@ -115,16 +116,12 @@ mod tests {
         p.value("outer", 42.0);
         let mut c = p.context("ctx");
         //p.value("conflict", 13.0);
-        let value1 = c.value("val1", 17.2);
-        // let value2 = {
-        //     let mut c2 = c.context("inner");
-        //     c2.value("val2", 33.3)
-        // };
-        // for i in 0..3 {
-        //     let mut c4 = c.context(&i.to_string());
-        //     c4.value("loopval", i as f32);
-        // }
-        //c.value("conflict", 14.0); // TODO: Is there a way to make this non-conflicting?
+        let _value1 = c.value("val1", 17.2);
+        for i in 0..3 {
+            let mut c4 = c.context(&i.to_string());
+            c4.value("loopval", i as f32);
+        }
+        c.value("mid2", 14.0);
         let mut c3 = p.context("ctx3");
         c3.value("val", 2.0);
         p.value("no conflict", 13.0);
