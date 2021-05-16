@@ -23,8 +23,8 @@ impl DB for Base {
     }
 }
 
-impl<'b, 'a: 'b, X:DB> Wrapper<'a, X> {
-    pub fn scope(&'b mut self) -> Wrapper<'b, Wrapper<'a, X>> {
+impl<'c, 'b: 'c, 'a: 'b, X:DB> Wrapper<'a, X> {
+    pub fn scope(&'b mut self) -> Wrapper<'c, Wrapper<'a, X>> {
         Wrapper(self)
     }
 }
