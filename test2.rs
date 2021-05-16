@@ -23,6 +23,7 @@ impl DB for Base {
     }
 }
 
+// 'a is the longest living! (we should develop a convention here)
 impl<'c, 'b: 'c, 'a: 'b, X:DB> Wrapper<'a, X> {
     pub fn scope(&'b mut self) -> Wrapper<'c, Wrapper<'a, X>> {
         Wrapper(self)
@@ -36,7 +37,7 @@ impl<'a, X:DB> DB for Wrapper<'a, X> {
     }
 }
 
-fn sub<'b, 'a : 'b, X: DB>(b: &'a mut Wrapper<'b, X>) {
+fn sub<'b, 'a : 'b, X: DB>(b: &'b mut Wrapper<'a, X>) {
     let j=1;
     let mut c = b.scope();
     c.action(5+j);
@@ -51,10 +52,10 @@ fn main() {
         let x=&mut b;
         sub(x);
         sub(x);
-        // for j in 0..4 
-        // {
-        //     let mut c = b.scope();
-        //     c.action(5+j);
-        // }
+        for j in 0..4 
+        {
+            let mut c = b.scope();
+            c.action(5+j);
+        }
     }
 }
