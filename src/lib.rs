@@ -104,6 +104,9 @@ impl ProgramRun {
         // println!("value {} {}", name, v);
         v
     }
+    pub fn set_epsilon(&mut self, val:f32) {
+        self.epsilon = val;
+    }
 }
 
 #[cfg(test)]
