@@ -39,6 +39,7 @@ impl<'c, 'b: 'c, 'a: 'b> Context<'a> {
 pub struct ProgramRun {
     connection: Connection,
     epsilon: f32,
+    relative_difference: f32,
 }
 
 impl ProgramRun {
@@ -60,6 +61,7 @@ impl ProgramRun {
         Ok(Self {
             connection,
             epsilon: 1e-7,
+            relative_difference: 0.01, // 1% difference
         })
     }
     pub fn context<'b, 'a: 'b>(&'a mut self, name: &str) -> Context<'b> {
@@ -77,7 +79,9 @@ impl ProgramRun {
             params![name],
             |row| row.get::<_, f64>(0),
         ) {
-            if ((f as f32) - v).abs() > self.epsilon {
+            let base= ((f as f32) + v).abs().max(1e-7);
+            let diff = ((f as f32) - v).abs();
+            if diff > self.epsilon || diff*2.0 > self.relative_difference*base {
                 Self::difference(name, f as f32, v);
             }
             //println!("old value {}", f);
@@ -106,6 +110,9 @@ impl ProgramRun {
     }
     pub fn set_epsilon(&mut self, val:f32) {
         self.epsilon = val;
+    }
+    pub fn set_relative_difference(&mut self, val:f32) {
+        self.relative_difference = val;
     }
 }
 
